@@ -44,7 +44,7 @@
 
 <Method name="dataGetStatic">
 <Description>
-Геттер для SQL контекста. Логика получения данных анадогична объектному доступу, пункты 2-5.</Description>
+Геттер для SQL контекста. Логика получения данных аналогична объектному доступу, пункты 2-5.</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>id</FormalSpec>
 <ReturnType>%String</ReturnType>
