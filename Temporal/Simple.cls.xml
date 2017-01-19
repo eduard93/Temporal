@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Simple">
+<Super>%Persistent,Common,Populate</Super>
+<TimeCreated>64302,47534.613423</TimeCreated>
+
+<Property name="data">
+<Description>
+Реальные данные</Description>
+<Type>%String</Type>
+<SqlComputeCode>set {*} = ##class(Temporal.Simple).dataGetStatic({ID})</SqlComputeCode>
+<SqlComputed>1</SqlComputed>
+<Transient>1</Transient>
+</Property>
+
+<Method name="dataGet">
+<Description><![CDATA[
+Объектный доступ к данным. Ленивая загрузка.
+1. Если есть, то берём данные из памяти. ВЫХОД
+2. Если нужна последняя версия, то берём её сразу
+3. Если есть, то берём данные именно на момент %ts
+4. Если есть, то берём ближайшее следующее/предыущее значение
+5. Если нужно значение на дату >%ts, но его не существует, то берём предыдущее значение (должно быть аналогично 2? TODO)
+6. Записываем полученное значение в память
+7. Возвращаем значение ]]></Description>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%data // No id == new object -> return actual value
+	return:i%data i%data // We got value in memory already, so we can return it
+	
+	// No data in memory
+	if '..%ts { // Last version requested, return it
+		set val = ^prop(id) 
+	} elseif $d(^prop(id,..%ts),val) { // Search global for data at specific point of time
+	} elseif $o(^prop(id,..%ts),..%state,val) {
+	} elseif ..%state=1 {
+		set temp = $o(^prop(id,..%ts),-1,val)
+	}
+	set i%data = val 
+	return i%data
+]]></Implementation>
+</Method>
+
+<Method name="dataGetStatic">
+<Description>
+Геттер для SQL контекста. Логика получения данных анадогична объектному доступу, пункты 2-5.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%ts)=0 $g(^prop(id),"")
+	return:$d(^prop(id,%ts),val)=1 val
+	return:$o(^prop(id,%ts),%state,val) val
+	if %state=1 {
+		set temp = $o(^prop(id,%ts),-1,val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="dataSet">
+<Description>
+Сеттер свойства data. 
+Устанавливает только если открыта актуальная версия объекта</Description>
+<FormalSpec>val</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set:'..%ts i%data = val
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="%OnAfterSave">
+<Description>
+Пишем новую версию свойства в глобал только если объект новый или оно поменялось.</Description>
+<FormalSpec>insert:%Boolean</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+	set ts = ..ts2unixtime() // Как форсировать для всех связанных объектов одно время сохранения? Надо ли.
+	if ((insert = $$$YES) ||  (^prop(..%Id()) '=i%data)) {
+		set ^prop(..%Id()) = i%data
+		set ^prop(..%Id(), ts) = i%data // Для типа данных пишем значение, для объекта - id, сериализуемые сериализуем, стримы оборачиваем в классы и пишем id.  
+	}
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="add">
+<Description>
+!!!!!!!!!!!!
+Всё что ниже - утилиты для генерации данных 
+Добавить новый объект</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>data</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set obj = ..%New(data)
+	quit obj.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="upd">
+<Description>
+Обновить объект</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id,data</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set obj = ..%OpenId(id)
+	set obj.data = data
+	quit obj.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="%OnNew">
+<Description>
+Конструктор нового объекта</Description>
+<FormalSpec>data</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set ..data = data
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^Temporal.SimpleD</DataLocation>
+<DefaultData>SimpleDefaultData</DefaultData>
+<IdLocation>^Temporal.SimpleD</IdLocation>
+<IndexLocation>^Temporal.SimpleI</IndexLocation>
+<StreamLocation>^Temporal.SimpleS</StreamLocation>
+<Data name="SimpleDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+</Data>
+</Storage>
+</Class>
+</Export>

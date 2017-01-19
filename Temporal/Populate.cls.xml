@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Populate">
+<Abstract>1</Abstract>
+<TimeCreated>64302,73608.331208</TimeCreated>
+
+<Method name="populate">
+<Description>
+do ##class(Temporal.Simple).populate()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>count=1000000,updCycles=10,rebuild=$$$NO</FormalSpec>
+<Implementation><![CDATA[
+	do ..clean()
+	kill ^dbg
+	kill:rebuild ^prop
+	do:rebuild ..%KillExtent()
+	
+	do:rebuild ..massAdd(count)
+	do ..massAllUpd(updCycles)
+	
+	//do ##class(%SQL.Statement).%ExecDirect(,"select * from "_$classname()).%Display()
+]]></Implementation>
+</Method>
+
+<Method name="massAdd">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>count</FormalSpec>
+<Implementation><![CDATA[
+	for i = 1:1:count {
+		set sc = ..add(i)
+		write:$$$ISERR(sc) $System.Status.GetErrorText(sc)
+	}
+]]></Implementation>
+</Method>
+
+<Method name="add">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>data</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="massAllUpd">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>count</FormalSpec>
+<Implementation><![CDATA[
+	for i = 1:1:count {
+		do ..allUpd(^Temporal.SimpleD)
+	}
+]]></Implementation>
+</Method>
+
+<Method name="allUpd">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>count</FormalSpec>
+<Implementation><![CDATA[
+	for i = 1:1:count {
+		set sc = ..upd(i, $random(count))
+		write:$$$ISERR(sc) $System.Status.GetErrorText(sc)
+	}
+]]></Implementation>
+</Method>
+
+<Method name="upd">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id,data</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>
