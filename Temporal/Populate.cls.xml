@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="Cache" version="25">
 <Class name="Temporal.Populate">
+<Description>
+Утилиты генерации данных.</Description>
 <Abstract>1</Abstract>
 <TimeCreated>64302,73608.331208</TimeCreated>
 
 <Method name="populate">
 <Description>
+Создать count записей, обновить значение каждой updCycles раз
+Удалить все данные, если установлен rebuild
 do ##class(Temporal.Simple).populate()</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count=1000000,updCycles=10,rebuild=$$$NO</FormalSpec>
@@ -23,6 +27,8 @@ do ##class(Temporal.Simple).populate()</Description>
 </Method>
 
 <Method name="massAdd">
+<Description>
+Добавить count записей</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count</FormalSpec>
 <Implementation><![CDATA[
@@ -34,6 +40,8 @@ do ##class(Temporal.Simple).populate()</Description>
 </Method>
 
 <Method name="add">
+<Description>
+Добавить 1 запись</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>data</FormalSpec>
 <ReturnType>%Status</ReturnType>
@@ -42,16 +50,20 @@ do ##class(Temporal.Simple).populate()</Description>
 </Method>
 
 <Method name="massAllUpd">
+<Description>
+Провести count циклов перезаписи всех данных</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count</FormalSpec>
 <Implementation><![CDATA[
 	for i = 1:1:count {
-		do ..allUpd(^Temporal.SimpleD)
+		do ..allUpd(..lastId())
 	}
 ]]></Implementation>
 </Method>
 
 <Method name="allUpd">
+<Description>
+Обновит все объекты класса случайными данными</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count</FormalSpec>
 <Implementation><![CDATA[
@@ -67,6 +79,30 @@ do ##class(Temporal.Simple).populate()</Description>
 <FormalSpec>id,data</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="lastId">
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set global = ..getDataGlobal(%compiledclass.Name)
+	quit:global="" $$$OK
+    do %code.WriteLine(" Return $Order(" _ global _ "(""""), -1)")
+    quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="getDataGlobal">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	return:'$$$comClassDefined(class) ""
+	set strategy = $$$comClassKeyGet(class, $$$cCLASSstoragestrategy)
+	return:strategy="" ""
+	return $$$defMemberKeyGet(class, $$$cCLASSstorage, strategy, $$$cSDEFdatalocation)
 ]]></Implementation>
 </Method>
 </Class>
