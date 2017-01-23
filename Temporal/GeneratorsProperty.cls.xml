@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.GeneratorsProperty">
+<Description>
+Class, generating propertyGet, propertyGetStatic, propertySet methods for property</Description>
+<Abstract>1</Abstract>
+<TimeCreated>64306,76024.469834</TimeCreated>
+
+<Method name="getCode">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>methodType:%String(VALUELIST=",Get,GetStatic,Set"),propertyName:%String,global:%String</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set method = ##class(%Dictionary.MethodDefinition).IDKEYOpen($classname(), "property" _ methodType)
+	set code = method.Implementation.Read($$$MaxCacheInt)
+	/// ByRef OutputString As %String, Start As %Integer = 1, RepeatCount As %Integer = 0, StartMode As %Integer = 0) As %Integer
+	do ##class(%Utility).Replace(code, "property", propertyName, $$$NO, .code2)
+	do ##class(%Utility).Replace(code2, "global", global, $$$NO, .code)
+	return code
+]]></Implementation>
+</Method>
+
+<Method name="propertyGet">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>property,global</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%property // No id == new object -> return actual value
+	return:i%property i%property // We got value in memory already, so we can return it
+	
+	// No property in memory
+	if '..%unixtime { // Last version requested, return it
+		set val = global(id) 
+	} elseif $d(global(id, ..%unixtime), val) { // Search global for property at specific point of time
+	} elseif $o(global(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(global(id, ..%unixtime), -1, val)
+	}
+	set i%property = val 
+	return i%property
+]]></Implementation>
+</Method>
+</Class>
+</Export>

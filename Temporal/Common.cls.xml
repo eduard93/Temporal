@@ -4,9 +4,10 @@
 <Description>
 Общие методы для данных с историей.</Description>
 <Abstract>1</Abstract>
+<PropertyClass>Temporal.Property</PropertyClass>
 <TimeCreated>64302,73334.212591</TimeCreated>
 
-<Property name="%ts">
+<Property name="%unixtime">
 <Description>
 Дата, на которую открыт объект. Устанавливается только через метод OpenAt(id,date, debug)
 Пусто - открыта последняя версия</Description>
@@ -16,7 +17,7 @@
 
 <Property name="%state">
 <Description>
-Открывать объект до или после отметки времени %ts</Description>
+Открывать объект до или после отметки времени %unixtime</Description>
 <Type>%Integer</Type>
 <Transient>1</Transient>
 </Property>
@@ -24,14 +25,14 @@
 <Method name="openAt">
 <Description>
 Open object at the specific point in time
-Открыть объект на определённую дату timestamp</Description>
+Открыть объект на определённую дату unixtime</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec><![CDATA[id:%Integer,concurrency:%Integer=-1,&sc:%Status=$$$OK,state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,timestamp:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO]]></FormalSpec>
+<FormalSpec><![CDATA[id:%Integer,concurrency:%Integer=-1,&sc:%Status=$$$OK,state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO]]></FormalSpec>
 <ReturnType>Temporal.Simple</ReturnType>
 <Implementation><![CDATA[
 	set obj = ..%OpenId(id, concurrency, .sc)
 	if $$$ISOK(sc) {
-		set sc = obj.setAt(state, timestamp, debug)		
+		set sc = obj.setAt(state, unixtime, debug)		
 	}
 	return obj
 ]]></Implementation>
@@ -39,13 +40,13 @@ Open object at the specific point in time
 
 <Method name="setAt">
 <Description>
-Internal method to set timestamp/state
-Внутренний метод установки %state/%ts</Description>
-<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,timestamp:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
+Internal method to set unixtime/state
+Внутренний метод установки %state/%unixtime</Description>
+<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($zunixtime,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	set i%%state = state
-	set i%%ts = ..ts2unixtime(timestamp, debug)
+	set i%%unixtime = ..ts2unixtime(unixtime, debug)
 	quit $$$OK
 ]]></Implementation>
 </Method>
@@ -56,26 +57,26 @@ To get data at the specific point of time add this procedure
 Для получения данных на определённый момент времени добавляем: 
 WHERE Temporal.AtTime(1,1484820252,1)=1 или Temporal.AtTime(,'2017-01-19 00:18:14.000')=1
 Процедура выполняется 1 раз за запрос.
-w ##class(Utils.Temp).AtTime("2017-01-19 00:18:14.000"),!,%ts 1484815635
+w ##class(Utils.Temp).AtTime("2017-01-19 00:18:14.000"),!,%unixtime 1484815635
 w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,timestamp:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
+<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($zunixtime,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
 <ReturnType>%Boolean</ReturnType>
 <SqlName>AtTime</SqlName>
 <SqlProc>1</SqlProc>
 <Implementation><![CDATA[
 	set %state = state
-	set %ts = ..ts2unixtime(timestamp, debug)
+	set %unixtime = ..ts2unixtime(unixtime, debug)
 	q $$$YES
 ]]></Implementation>
 </Method>
 
 <Method name="clean">
 <Description>
-Удалить вспомогательные переменные %ts,%state</Description>
+Удалить вспомогательные переменные %unixtime,%state</Description>
 <ClassMethod>1</ClassMethod>
 <SqlProc>1</SqlProc>
-<Implementation><![CDATA[	kill %ts,%state
+<Implementation><![CDATA[	kill %unixtime,%state
 ]]></Implementation>
 </Method>
 
@@ -83,13 +84,13 @@ w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <Description>
 Преобразование даты в unixtime</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>timestamp:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
+<FormalSpec>unixtime:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
 	if debug {
-		set ts=timestamp
+		set ts=unixtime
 	} else {
-		set ts=$zdt($zdth(timestamp,3),-2) // _ $p(timestamp,".",2)
+		set ts=$zdt($zdth(unixtime,3),-2) // _ $p(unixtime,".",2)
 	}
 	return ts
 ]]></Implementation>
@@ -104,11 +105,20 @@ w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
 	set sc = $$$OK
-	if ..%ts {
+	if ..%unixtime {
 		set sc = $$$ERROR($$$GeneralError, "Can't save. History data.")
 		
 	}
 	quit sc
+]]></Implementation>
+</Method>
+
+<Method name="generate">
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<ReturnType>%Status</ReturnType>
+<ForceGenerate>1</ForceGenerate>
+<Implementation><![CDATA[	quit ##class(Temporal.Generators).generateClassMethods(%class)
 ]]></Implementation>
 </Method>
 </Class>

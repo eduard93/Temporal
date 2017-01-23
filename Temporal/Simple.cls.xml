@@ -18,9 +18,9 @@
 Объектный доступ к данным. Ленивая загрузка.
 1. Если есть, то берём данные из памяти. ВЫХОД
 2. Если нужна последняя версия, то берём её сразу
-3. Если есть, то берём данные именно на момент %ts
+3. Если есть, то берём данные именно на момент %unixtime
 4. Если есть, то берём ближайшее следующее/предыущее значение
-5. Если нужно значение на дату >%ts, но его не существует, то берём предыдущее значение (должно быть аналогично 2? TODO)
+5. Если нужно значение на дату >%unixtime, но его не существует, то берём предыдущее значение (должно быть аналогично 2? TODO)
 6. Записываем полученное значение в память
 7. Возвращаем значение ]]></Description>
 <ReturnType>%String</ReturnType>
@@ -30,12 +30,12 @@
 	return:i%data i%data // We got value in memory already, so we can return it
 	
 	// No data in memory
-	if '..%ts { // Last version requested, return it
+	if '..%unixtime { // Last version requested, return it
 		set val = ^prop(id) 
-	} elseif $d(^prop(id,..%ts),val) { // Search global for data at specific point of time
-	} elseif $o(^prop(id,..%ts),..%state,val) {
+	} elseif $d(^prop(id,..%unixtime),val) { // Search global for data at specific point of time
+	} elseif $o(^prop(id,..%unixtime),..%state,val) {
 	} elseif ..%state=1 {
-		set temp = $o(^prop(id,..%ts),-1,val)
+		set temp = $o(^prop(id,..%unixtime),-1,val)
 	}
 	set i%data = val 
 	return i%data
@@ -49,11 +49,11 @@
 <FormalSpec>id</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	return:$d(%ts)=0 $g(^prop(id),"")
-	return:$d(^prop(id,%ts),val)=1 val
-	return:$o(^prop(id,%ts),%state,val) val
+	return:$d(%unixtime)=0 $g(^prop(id),"")
+	return:$d(^prop(id,%unixtime),val)=1 val
+	return:$o(^prop(id,%unixtime),%state,val) val
 	if %state=1 {
-		set temp = $o(^prop(id,%ts),-1,val)
+		set temp = $o(^prop(id,%unixtime),-1,val)
 		return val
 	}
 	return ""
@@ -67,7 +67,7 @@
 <FormalSpec>val</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set:'..%ts i%data = val
+	set:'..%unixtime i%data = val
 	return $$$OK
 ]]></Implementation>
 </Method>

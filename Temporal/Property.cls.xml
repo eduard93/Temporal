@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Property">
+<Abstract>1</Abstract>
+<TimeCreated>64306,73306.950421</TimeCreated>
+
+<Parameter name="TIMEPROPERTY">
+<Description>
+Specify to ntime-enable the property</Description>
+<Type>BOOLEAN</Type>
+<Expression>$$$NO</Expression>
+</Parameter>
+
+<Parameter name="TIMEPRECISION">
+<Description>
+0 = seconds. 1-3 number of digits after seconds </Description>
+<Type>INTEGER</Type>
+<Constraint>,0,1,2,3</Constraint>
+<Default>0</Default>
+<Flags>ENUM</Flags>
+</Parameter>
+</Class>
+</Export>

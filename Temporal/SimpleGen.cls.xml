@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.SimpleGen">
+<Super>%Persistent,Common,Populate</Super>
+<TimeCreated>64306,75825.30948</TimeCreated>
+
+<Property name="data">
+<Type>%String</Type>
+<Parameter name="TIMEPROPERTY" value="1"/>
+</Property>
+
+<Property name="data2">
+<Type>%String</Type>
+</Property>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^Temporal.SimpleGenD</DataLocation>
+<DefaultData>SimpleGenDefaultData</DefaultData>
+<IdLocation>^Temporal.SimpleGenD</IdLocation>
+<IndexLocation>^Temporal.SimpleGenI</IndexLocation>
+<StreamLocation>^Temporal.SimpleGenS</StreamLocation>
+<Data name="SimpleGenDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>data</Value>
+</Value>
+<Value name="3">
+<Value>data2</Value>
+</Value>
+</Data>
+</Storage>
+
+<Method name="dataGet">
+<Description>
+Property getter method</Description>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%data // No id == new object -> return actual value
+	return:i%data i%data // We got value in memory already, so we can return it
+	
+	// No data in memory
+	if '..%unixtime { // Last version requested, return it
+		set val = ^Temporal.SimpleGenDdata(id) 
+	} elseif $d(^Temporal.SimpleGenDdata(id, ..%unixtime), val) { // Search ^Temporal.SimpleGenDdata for data at specific point of time
+	} elseif $o(^Temporal.SimpleGenDdata(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata(id, ..%unixtime), -1, val)
+	}
+	set i%data = val 
+	return i%data
+]]></Implementation>
+</Method>
+</Class>
+</Export>
