@@ -20,25 +20,100 @@ Class, generating propertyGet, propertyGetStatic, propertySet methods for proper
 ]]></Implementation>
 </Method>
 
+<Method name="getSaveCode">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>propertyName:%String,global:%String,propertyType:%Dictionary.CacheClassname</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set classType = $$$getClassType($$$NormalizeClassname(propertyType))
+	
+	/*#define cCLASSCLASSTYPEDATATYPE "datatype"
+	#define cCLASSCLASSTYPEPERSISTENT "persistent"
+	#define cCLASSCLASSTYPESERIAL "serial"
+	#define cCLASSCLASSTYPESTREAM "stream"*/
+
+	set ^dbg($i(^dbg)) = $lb(propertyName, global, propertyType, classType)
+	set method = ##class(%Dictionary.MethodDefinition).IDKEYOpen($classname(), "OnAfterSave" _ classType)
+	set code = method.Implementation.Read($$$MaxCacheInt)
+
+	do ##class(%Utility).Replace(code, "property", propertyName, $$$NO, .code2)
+	do ##class(%Utility).Replace(code2, "global", global, $$$NO, .code)
+	return code
+]]></Implementation>
+</Method>
+
 <Method name="propertyGet">
 <ClassMethod>1</ClassMethod>
 <FormalSpec>property,global</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	set id = ..%Id()
-	return:'id i%property // No id == new object -> return actual value
-	return:i%property i%property // We got value in memory already, so we can return it
+	return:'id i%property
+	return:i%property i%property
 	
-	// No property in memory
-	if '..%unixtime { // Last version requested, return it
+	if '..%unixtime {
 		set val = global(id) 
-	} elseif $d(global(id, ..%unixtime), val) { // Search global for property at specific point of time
+	} elseif $d(global(id, ..%unixtime), val) {
 	} elseif $o(global(id, ..%unixtime), ..%state, val) {
 	} elseif ..%state=1 {
 		set temp = $o(global(id, ..%unixtime), -1, val)
 	}
 	set i%property = val 
 	return i%property
+]]></Implementation>
+</Method>
+
+<Method name="propertyGetStatic">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>global</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%unixtime)=0 $g(global(id),"")
+	return:$d(global(id, %unixtime), val)=1 val
+	return:$o(global(id, %unixtime), %state, val) val
+	if %state=1 {
+		set temp = $o(global(id, %unixtime), -1, val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="propertySet">
+<Description>
+Сеттер свойства 
+Устанавливает только если открыта актуальная версия объекта</Description>
+<FormalSpec>property</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set:'..%unixtime i%property = val
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="OnAfterSavedatatype">
+<Description>
+Для типа данных пишем значение, для объекта - id, сериализуемые сериализуем, стримы оборачиваем в классы и пишем id.  </Description>
+<FormalSpec>property,global</FormalSpec>
+<Implementation><![CDATA[
+	
+	if ((insert = $$$YES) || (global(id) '=i%property)) {
+		set global(id) = i%property
+		set global(id, ts) = i%property 
+	}
+]]></Implementation>
+</Method>
+
+<Method name="OnAfterSavepersistent">
+<Description>
+Для для объекта - id</Description>
+<FormalSpec>property,global</FormalSpec>
+<Implementation><![CDATA[
+	set propertyId = $s($isObject(i%property):i%property.%Id(), 1:"")
+	if ((insert = $$$YES) || (global(id) '= propertyId)) {
+		set global(id) = propertyId
+		set global(id, ts) = propertyId
+	}
 ]]></Implementation>
 </Method>
 </Class>

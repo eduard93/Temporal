@@ -4,8 +4,10 @@
 <Description>
 Общие методы для данных с историей.</Description>
 <Abstract>1</Abstract>
+<IncludeCode>%occObject</IncludeCode>
 <PropertyClass>Temporal.Property</PropertyClass>
 <TimeCreated>64302,73334.212591</TimeCreated>
+<DependsOn>Temporal.Generators</DependsOn>
 
 <Property name="%unixtime">
 <Description>
@@ -118,7 +120,20 @@ w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <CodeMode>objectgenerator</CodeMode>
 <ReturnType>%Status</ReturnType>
 <ForceGenerate>1</ForceGenerate>
-<Implementation><![CDATA[	quit ##class(Temporal.Generators).generateClassMethods(%class)
+<Implementation><![CDATA[	quit ##class(Temporal.Generators).generateAllMethods(%class)
+]]></Implementation>
+</Method>
+
+<Method name="%OnAfterSave">
+<Description>
+Execute after each save to store temporal data</Description>
+<FormalSpec>insert:%Boolean</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+ set ts = ..ts2unixtime()
+ set id = ..%Id() quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>

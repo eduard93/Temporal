@@ -7,15 +7,16 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Abstract>1</Abstract>
 <TimeCreated>64306,75925.447893</TimeCreated>
 
-<Method name="generateClassMethods">
+<Method name="generateAllMethods">
 <ClassMethod>1</ClassMethod>
 <FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set ^dbg = 1
 	set sc = ..generateProperiesMethods(class) 
 	quit:$$$ISERR(sc) sc
 	
+	set sc = ..generateClassMethods(class) 
+	quit:$$$ISERR(sc) sc
 	
 	quit class.%Save()
 ]]></Implementation>
@@ -30,14 +31,9 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	for i=1:1:class.Properties.Count() {
 		#dim property As %Dictionary.PropertyDefinition
 		set property = class.Properties.GetAt(i)
-		//set p = property.Parameters.
-		//w property.Name,!
-		//zw p
-		//set ^dbg = property.Parameters.GetAt("TIMEPROPERTY")
-		//set ^dbg($i(^dbg)) = $lb(property.Name, property.Parameters.GetAt("TIMEPROPERTY"))
 		CONTINUE:property.Parameters.GetAt("TIMEPROPERTY")'=$$$YES // Property is not a time roperty
-		
 		set sc = ..generatePropertyMethods(class, property)
+		quit:$$$ISERR(sc)
 	}
 	quit sc
 ]]></Implementation>
@@ -51,9 +47,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	#dim sc As %Status = $$$OK
 	
 	set sc = ..generatePropertyGet(class, property) 
-	//quit:$$$ISERR(sc) sc
-	set ^dbg = $System.Status.GetErrorText(sc)
-	q 1
+	quit:$$$ISERR(sc) sc
 	
 	set sc = ..generatePropertyGetStatic(class, property) 
 	quit:$$$ISERR(sc) sc
@@ -73,10 +67,11 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Implementation><![CDATA[
 	#dim sc As %Status = $$$OK
 	
-	#dim method As %Dictionary.MethodDefinition = ..getMethod(class, property, "Get")
+	#dim method As %Dictionary.MethodDefinition = ..getPropertyMethod(class, property, "Get")
 	
 	set method.ClassMethod = $$$NO
-	set method.Description = "Property getter method"
+	set method.Description = property.Name _ " getter method in object context"
+	set method.ReturnType = property.Type
 	
 	set code = ##class(Temporal.GeneratorsProperty).getCode("Get", property.Name, ..getGlobal(class, property))
 	do method.Implementation.Write(code)	
@@ -91,7 +86,16 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Implementation><![CDATA[
 	#dim sc As %Status = $$$OK
 	
-	quit sc
+	#dim method As %Dictionary.MethodDefinition = ..getPropertyMethod(class, property, "GetStatic")
+	
+	set method.ClassMethod = $$$YES
+	set method.Description = property.Name _ " getter method in SQL context"
+	set method.FormalSpec = "id:%Integer"
+	set method.ReturnType = property.Type
+	
+	set code = ##class(Temporal.GeneratorsProperty).getCode("GetStatic", property.Name, ..getGlobal(class, property))
+	do method.Implementation.Write(code)	
+	quit method.%Save()
 ]]></Implementation>
 </Method>
 
@@ -102,7 +106,16 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Implementation><![CDATA[
 	#dim sc As %Status = $$$OK
 	
-	quit sc
+	#dim method As %Dictionary.MethodDefinition = ..getPropertyMethod(class, property, "Set")
+	
+	set method.ClassMethod = $$$NO
+	set method.Description = property.Name _ " setter method in object context"
+	set method.ReturnType = "%Status"
+	set method.FormalSpec = "val:" _ property.Type
+	
+	set code = ##class(Temporal.GeneratorsProperty).getCode("Set", property.Name, ..getGlobal(class, property))
+	do method.Implementation.Write(code)
+	quit method.%Save()
 ]]></Implementation>
 </Method>
 
@@ -111,18 +124,62 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <FormalSpec>class:%Dictionary.ClassDefinition,property:%Dictionary.PropertyDefinition</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#dim sc As %Status = $$$OK
-	
-	quit sc
+	/// Enforce:
+	/// [ SqlComputeCode = {set {*} = ##class(class).propertyGetStatic({ID})}, SqlComputed, Transient ];
+
+	set property.Transient = $$$YES
+	set property.SqlComputed = $$$YES
+	set property.SqlComputeCode = "set {*} = ##class(" _class.Name _ ")." _ property.Name _ "GetStatic({ID})"
+
+	quit $$$OK
 ]]></Implementation>
 </Method>
 
-<Method name="getMethod">
+<Method name="generateClassMethods">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	/// Method %OnAfterSave(insert As %Boolean) As %Status [ Private, ServerOnly = 1 ]
+	#dim method As %Dictionary.MethodDefinition = ..getMethod(class, "%OnAfterSave")
+
+	set method.ClassMethod = $$$NO
+	set method.Description = "Execute after each save to store temporal data"
+	set method.ReturnType = "%Status"
+	set method.FormalSpec = "insert:%Boolean"
+	set method.Private = $$$YES
+	set method.ServerOnly = $$$YES
+	
+	do method.Implementation.Write($$$TAB _ "set ts = ..ts2unixtime()" _ $$$NL _ $$$TAB _ "set id = ..%Id()")
+	
+	for i=1:1:class.Properties.Count() {
+		#dim property As %Dictionary.PropertyDefinition
+		set property = class.Properties.GetAt(i)
+		CONTINUE:property.Parameters.GetAt("TIMEPROPERTY")'=$$$YES // Property is not a time roperty
+		set code = ##class(Temporal.GeneratorsProperty).getSaveCode(property.Name, ..getGlobal(class, property), property.Type)
+		do method.Implementation.Write(code)
+	}
+	do method.Implementation.Write($$$TAB _ "quit $$$OK")
+	quit method.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="getPropertyMethod">
 <ClassMethod>1</ClassMethod>
 <FormalSpec>class:%Dictionary.ClassDefinition,property:%Dictionary.PropertyDefinition,methodType:%String(VALUELIST=",Get,GetStatic,Set")</FormalSpec>
 <ReturnType>%Dictionary.MethodDefinition</ReturnType>
 <Implementation><![CDATA[
 	set methodName = property.Name _ methodType
+	quit ..getMethod(class, methodName)
+]]></Implementation>
+</Method>
+
+<Method name="getMethod">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition,methodName:%String</FormalSpec>
+<ReturnType>%Dictionary.MethodDefinition</ReturnType>
+<Implementation><![CDATA[
 	
 	if ##class(%Dictionary.MethodDefinition).IDKEYExists(class.Name, methodName, .methodId) {
 		set method = ##class(%Dictionary.MethodDefinition).%OpenId(methodId)
