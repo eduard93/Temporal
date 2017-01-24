@@ -4,14 +4,44 @@
 <Super>%Persistent,Common,Populate</Super>
 <TimeCreated>64306,75825.30948</TimeCreated>
 
-<Property name="data">
+<Property name="data1">
 <Type>%String</Type>
+<SqlComputeCode>set {*} = ##class(Temporal.SimpleGen).data1GetStatic({ID})</SqlComputeCode>
+<SqlComputed>1</SqlComputed>
+<Transient>1</Transient>
 <Parameter name="TIMEPROPERTY" value="1"/>
 </Property>
 
 <Property name="data2">
 <Type>%String</Type>
 </Property>
+
+<Property name="data3">
+<Type>Temporal.SimpleGen</Type>
+<SqlComputeCode>set {*} = ##class(Temporal.SimpleGen).data3GetStatic({ID})</SqlComputeCode>
+<SqlComputed>1</SqlComputed>
+<Transient>1</Transient>
+<Parameter name="TIMEPROPERTY" value="1"/>
+</Property>
+
+<Method name="test">
+<Description>
+do ##class(Temporal.SimpleGen).test()</Description>
+<ClassMethod>1</ClassMethod>
+<Implementation><![CDATA[
+	do ..%KillExtent()
+	kill ^Temporal.SimpleGenDdata1,^Temporal.SimpleGenDdata3
+	
+	s a=##class(Temporal.SimpleGen).%New()
+	s b=##class(Temporal.SimpleGen).%New()
+	
+	s a.data3 = b
+	s a.data1 = 222
+	//w $System.Status.GetErrorText(b.%Save()),!
+	w $System.Status.GetErrorText(a.%Save())
+	zw ^Temporal.SimpleGenDdata1,^Temporal.SimpleGenDdata3
+]]></Implementation>
+</Method>
 
 <Storage name="Default">
 <Type>%Library.CacheStorage</Type>
@@ -30,27 +60,182 @@
 <Value name="3">
 <Value>data2</Value>
 </Value>
+<Value name="4">
+<Value>data3</Value>
+</Value>
 </Data>
 </Storage>
 
-<Method name="dataGet">
+<Method name="data3Get">
 <Description>
-Property getter method</Description>
+data3 getter method in object context</Description>
+<ReturnType>Temporal.SimpleGen</ReturnType>
 <Implementation><![CDATA[
 	set id = ..%Id()
-	return:'id i%data // No id == new object -> return actual value
-	return:i%data i%data // We got value in memory already, so we can return it
+	return:'id i%data3
+	return:i%data3 i%data3
 	
-	// No data in memory
-	if '..%unixtime { // Last version requested, return it
+	if '..%unixtime {
+		set val = ^Temporal.SimpleGenDdata3(id) 
+	} elseif $d(^Temporal.SimpleGenDdata3(id, ..%unixtime), val) {
+	} elseif $o(^Temporal.SimpleGenDdata3(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata3(id, ..%unixtime), -1, val)
+	}
+	set i%data3 = val 
+	return i%data3
+]]></Implementation>
+</Method>
+
+<Method name="data3GetStatic">
+<Description>
+data3 getter method in SQL context</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer</FormalSpec>
+<ReturnType>Temporal.SimpleGen</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%unixtime)=0 $g(^Temporal.SimpleGenDdata3(id),"")
+	return:$d(^Temporal.SimpleGenDdata3(id, %unixtime), val)=1 val
+	return:$o(^Temporal.SimpleGenDdata3(id, %unixtime), %state, val) val
+	if %state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata3(id, %unixtime), -1, val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="data3Set">
+<Description>
+data3 setter method in object context</Description>
+<FormalSpec>val:Temporal.SimpleGen</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set:'..%unixtime i%data3 = val
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="dataGet">
+<Description>
+data getter method in object context</Description>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%data
+	return:i%data i%data
+	
+	if '..%unixtime {
 		set val = ^Temporal.SimpleGenDdata(id) 
-	} elseif $d(^Temporal.SimpleGenDdata(id, ..%unixtime), val) { // Search ^Temporal.SimpleGenDdata for data at specific point of time
+	} elseif $d(^Temporal.SimpleGenDdata(id, ..%unixtime), val) {
 	} elseif $o(^Temporal.SimpleGenDdata(id, ..%unixtime), ..%state, val) {
 	} elseif ..%state=1 {
 		set temp = $o(^Temporal.SimpleGenDdata(id, ..%unixtime), -1, val)
 	}
 	set i%data = val 
 	return i%data
+]]></Implementation>
+</Method>
+
+<Method name="dataGetStatic">
+<Description>
+data getter method in SQL context</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%unixtime)=0 $g(^Temporal.SimpleGenDdata(id),"")
+	return:$d(^Temporal.SimpleGenDdata(id, %unixtime), val)=1 val
+	return:$o(^Temporal.SimpleGenDdata(id, %unixtime), %state, val) val
+	if %state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata(id, %unixtime), -1, val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="dataSet">
+<Description>
+data setter method in object context</Description>
+<FormalSpec>val:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set:'..%unixtime i%data = val
+	return $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="%OnAfterSave">
+<Description>
+Execute after each save to store temporal data</Description>
+<FormalSpec>insert:%Boolean</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+ set ts = ..ts2unixtime()
+ set id = ..%Id()	
+	if ((insert = $$$YES) || (^Temporal.SimpleGenDdata1(id) '=i%data1)) {
+		set ^Temporal.SimpleGenDdata1(id) = i%data1
+		set ^Temporal.SimpleGenDdata1(id, ts) = i%data1 
+	}
+	set data3Id = $s($isObject(i%data3):i%data3.%Id(), 1:"")
+	if ((insert = $$$YES) || (^Temporal.SimpleGenDdata3(id) '= data3Id)) {
+		set ^Temporal.SimpleGenDdata3(id) = data3Id
+		set ^Temporal.SimpleGenDdata3(id, ts) = data3Id
+	}
+ quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="data1Get">
+<Description>
+data1 getter method in object context</Description>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%data1
+	return:i%data1 i%data1
+	
+	if '..%unixtime {
+		set val = ^Temporal.SimpleGenDdata1(id) 
+	} elseif $d(^Temporal.SimpleGenDdata1(id, ..%unixtime), val) {
+	} elseif $o(^Temporal.SimpleGenDdata1(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata1(id, ..%unixtime), -1, val)
+	}
+	set i%data1 = val 
+	return i%data1
+]]></Implementation>
+</Method>
+
+<Method name="data1GetStatic">
+<Description>
+data1 getter method in SQL context</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%unixtime)=0 $g(^Temporal.SimpleGenDdata1(id),"")
+	return:$d(^Temporal.SimpleGenDdata1(id, %unixtime), val)=1 val
+	return:$o(^Temporal.SimpleGenDdata1(id, %unixtime), %state, val) val
+	if %state=1 {
+		set temp = $o(^Temporal.SimpleGenDdata1(id, %unixtime), -1, val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="data1Set">
+<Description>
+data1 setter method in object context</Description>
+<FormalSpec>val:%String</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set:'..%unixtime i%data1 = val
+	return $$$OK
 ]]></Implementation>
 </Method>
 </Class>
