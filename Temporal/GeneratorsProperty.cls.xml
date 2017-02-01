@@ -8,21 +8,27 @@ Class, generating propertyGet, propertyGetStatic, propertySet methods for proper
 
 <Method name="getCode">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>methodType:%String(VALUELIST=",Get,GetStatic,Set"),propertyName:%String,global:%String</FormalSpec>
+<FormalSpec>methodType:%String(VALUELIST=",Get,GetStatic,Set"),propertyName:%String,propertyType:%Dictionary.CacheClassname,global:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
-	set method = ##class(%Dictionary.MethodDefinition).IDKEYOpen($classname(), "property" _ methodType)
+	set classType = $$$getClassType($$$NormalizeClassname(propertyType))
+	if ##class(%Dictionary.MethodDefinition).IDKEYExists($classname(), "property" _ methodType _ classType) {
+		set method = ##class(%Dictionary.MethodDefinition).IDKEYOpen($classname(), "property" _ methodType _ classType)
+	} else {
+		set method = ##class(%Dictionary.MethodDefinition).IDKEYOpen($classname(), "property" _ methodType)
+	}
 	set code = method.Implementation.Read($$$MaxCacheInt)
 	/// ByRef OutputString As %String, Start As %Integer = 1, RepeatCount As %Integer = 0, StartMode As %Integer = 0) As %Integer
 	do ##class(%Utility).Replace(code, "property", propertyName, $$$NO, .code2)
-	do ##class(%Utility).Replace(code2, "global", global, $$$NO, .code)
-	return code
+	do ##class(%Utility).Replace(code2, "global", global, $$$NO, .code3)
+	do ##class(%Utility).Replace(code3, "Common", propertyType, $$$NO, .code4)
+	return code4
 ]]></Implementation>
 </Method>
 
 <Method name="getSaveCode">
 <ClassMethod>1</ClassMethod>
-<FormalSpec>propertyName:%String,global:%String,propertyType:%Dictionary.CacheClassname</FormalSpec>
+<FormalSpec>propertyName:%String,propertyType:%Dictionary.CacheClassname,global:%String</FormalSpec>
 <ReturnType>%String</ReturnType>
 <Implementation><![CDATA[
 	set classType = $$$getClassType($$$NormalizeClassname(propertyType))
@@ -59,6 +65,27 @@ Class, generating propertyGet, propertyGetStatic, propertySet methods for proper
 		set temp = $o(global(id, ..%unixtime), -1, val)
 	}
 	set i%property = val 
+	return i%property
+]]></Implementation>
+</Method>
+
+<Method name="propertyGetpersistent">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>property,global</FormalSpec>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%property
+	return:i%property i%property
+	
+	if '..%unixtime {
+		set val = global(id) 
+	} elseif $d(global(id, ..%unixtime), val) {
+	} elseif $o(global(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(global(id, ..%unixtime), -1, val)
+	}
+	set i%property = ##class(Common).%OpenId(val) 
 	return i%property
 ]]></Implementation>
 </Method>
@@ -109,7 +136,7 @@ Class, generating propertyGet, propertyGetStatic, propertySet methods for proper
 Для для объекта - id</Description>
 <FormalSpec>property,global</FormalSpec>
 <Implementation><![CDATA[
-	set propertyId = $s($isObject(i%property):i%property.%Id(), 1:"")
+	set propertyId = $s($isObject(r%property):r%property.%Id(), 1:"")
 	if ((insert = $$$YES) || (global(id) '= propertyId)) {
 		set global(id) = propertyId
 		set global(id, ts) = propertyId

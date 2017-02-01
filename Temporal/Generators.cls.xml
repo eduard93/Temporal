@@ -52,7 +52,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	set sc = ..generatePropertyGetStatic(class, property) 
 	quit:$$$ISERR(sc) sc
 	
-	set sc = ..generatePropertySet(class, property) 
+	//set sc = ..generatePropertySet(class, property) 
 	quit:$$$ISERR(sc) sc
 	
 	set sc = ..setPropertyObject(class, property) 
@@ -73,7 +73,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	set method.Description = property.Name _ " getter method in object context"
 	set method.ReturnType = property.Type
 	
-	set code = ##class(Temporal.GeneratorsProperty).getCode("Get", property.Name, ..getGlobal(class, property))
+	set code = ##class(Temporal.GeneratorsProperty).getCode("Get", property.Name, property.Type, ..getGlobal(class, property))
 	do method.Implementation.Write(code)	
 	quit method.%Save()
 ]]></Implementation>
@@ -93,7 +93,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	set method.FormalSpec = "id:%Integer"
 	set method.ReturnType = property.Type
 	
-	set code = ##class(Temporal.GeneratorsProperty).getCode("GetStatic", property.Name, ..getGlobal(class, property))
+	set code = ##class(Temporal.GeneratorsProperty).getCode("GetStatic", property.Name, property.Type, ..getGlobal(class, property))
 	do method.Implementation.Write(code)	
 	quit method.%Save()
 ]]></Implementation>
@@ -113,7 +113,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	set method.ReturnType = "%Status"
 	set method.FormalSpec = "val:" _ property.Type
 	
-	set code = ##class(Temporal.GeneratorsProperty).getCode("Set", property.Name, ..getGlobal(class, property))
+	set code = ##class(Temporal.GeneratorsProperty).getCode("Set", property.Name, property.Type, ..getGlobal(class, property))
 	do method.Implementation.Write(code)
 	quit method.%Save()
 ]]></Implementation>
@@ -157,7 +157,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 		#dim property As %Dictionary.PropertyDefinition
 		set property = class.Properties.GetAt(i)
 		CONTINUE:property.Parameters.GetAt("TIMEPROPERTY")'=$$$YES // Property is not a time roperty
-		set code = ##class(Temporal.GeneratorsProperty).getSaveCode(property.Name, ..getGlobal(class, property), property.Type)
+		set code = ##class(Temporal.GeneratorsProperty).getSaveCode(property.Name, property.Type, ..getGlobal(class, property))
 		do method.Implementation.Write(code)
 	}
 	do method.Implementation.Write($$$TAB _ "quit $$$OK")
