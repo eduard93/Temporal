@@ -5,6 +5,7 @@
 Class, all methods for class
 propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Abstract>1</Abstract>
+<Super>Temporal.Utils.Dictionary</Super>
 <TimeCreated>64306,75925.447893</TimeCreated>
 
 <Method name="generateAllMethods">
@@ -172,21 +173,6 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Implementation><![CDATA[
 	set methodName = property.Name _ methodType
 	quit ..getMethod(class, methodName)
-]]></Implementation>
-</Method>
-
-<Method name="getMethod">
-<ClassMethod>1</ClassMethod>
-<FormalSpec>class:%Dictionary.ClassDefinition,methodName:%String</FormalSpec>
-<ReturnType>%Dictionary.MethodDefinition</ReturnType>
-<Implementation><![CDATA[
-	
-	if ##class(%Dictionary.MethodDefinition).IDKEYExists(class.Name, methodName, .methodId) {
-		set method = ##class(%Dictionary.MethodDefinition).%OpenId(methodId)
-	} else {
-		set method = ##class(%Dictionary.MethodDefinition).%New(class.Name _ ":" _ methodName)
-	}
-	quit method
 ]]></Implementation>
 </Method>
 

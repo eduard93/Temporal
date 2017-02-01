@@ -105,5 +105,40 @@ do ##class(Temporal.Simple).populate()</Description>
 	return $$$defMemberKeyGet(class, $$$cCLASSstorage, strategy, $$$cSDEFdatalocation)
 ]]></Implementation>
 </Method>
+
+<Method name="generateOnNew">
+<ClassMethod>1</ClassMethod>
+<CodeMode>objectgenerator</CodeMode>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	#dim method As %Dictionary.MethodDefinition = ##class(Temporal.Utils.Dictionary).getMethod(%class, "%OnNew")
+	
+	set method.ReturnType = "%Status"
+	
+	do method.Implementation.Clear()
+	
+	set spec = ""
+	for i=1:1:%compiledclass.Properties.Count() {
+		#dim property As %Dictionary.CompiledProperty
+		set property = %compiledclass.Properties.GetAt(i)
+		set propertyName = property.Name
+		set propertyType = property.Type
+		CONTINUE:propertyName["%"
+		
+		set spec = spec _ $lb(propertyName _ ":" _ propertyType _ "=""""")
+		do method.Implementation.Write($c(9) _ "set .." _ propertyName _ " = " _ propertyName _ $$$NL)
+	}
+	do method.Implementation.Write($c(9) _ "quit $$$OK")
+	set method.FormalSpec = $lts(spec)
+	quit method.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="%OnNew">
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit $$$OK
+]]></Implementation>
+</Method>
 </Class>
 </Export>

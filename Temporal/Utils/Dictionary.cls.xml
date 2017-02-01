@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Utils.Dictionary">
+<Abstract>1</Abstract>
+<TimeCreated>64316,1012.86327</TimeCreated>
+
+<Method name="getMethod">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition,methodName:%String</FormalSpec>
+<ReturnType>%Dictionary.MethodDefinition</ReturnType>
+<Implementation><![CDATA[
+	
+	if ##class(%Dictionary.MethodDefinition).IDKEYExists(class.Name, methodName, .methodId) {
+		set method = ##class(%Dictionary.MethodDefinition).%OpenId(methodId)
+	} else {
+		set method = ##class(%Dictionary.MethodDefinition).%New(class.Name _ ":" _ methodName)
+	}
+	quit method
+]]></Implementation>
+</Method>
+</Class>
+</Export>
