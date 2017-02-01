@@ -74,17 +74,15 @@
 
 <Method name="%OnAfterSave">
 <Description>
-Пишем новую версию свойства в глобал только если объект новый или оно поменялось.</Description>
+Execute after each save to store temporal data</Description>
 <FormalSpec>insert:%Boolean</FormalSpec>
 <Private>1</Private>
 <ReturnType>%Status</ReturnType>
 <ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
-	set ts = ..ts2unixtime() // Как форсировать для всех связанных объектов одно время сохранения? Надо ли.
-	if ((insert = $$$YES) ||  (^prop(..%Id()) '=i%data)) {
-		set ^prop(..%Id()) = i%data
-		set ^prop(..%Id(), ts) = i%data // Для типа данных пишем значение, для объекта - id, сериализуемые сериализуем, стримы оборачиваем в классы и пишем id.  
-	}
+	set ts = ..ts2unixtime()
+	set id = ..%Id()
+
 	quit $$$OK
 ]]></Implementation>
 </Method>
@@ -116,17 +114,6 @@
 ]]></Implementation>
 </Method>
 
-<Method name="%OnNew">
-<Description>
-Конструктор нового объекта</Description>
-<FormalSpec>data</FormalSpec>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	set ..data = data
-	quit $$$OK
-]]></Implementation>
-</Method>
-
 <Storage name="Default">
 <Type>%Library.CacheStorage</Type>
 <DataLocation>^Temporal.SimpleD</DataLocation>
@@ -140,5 +127,25 @@
 </Value>
 </Data>
 </Storage>
+
+<Method name="%OnNew">
+<FormalSpec>data:%Library.String=""</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set ..data = data
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="KillExtent">
+<Description>
+Kill extent</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill ^Temporal.SimpleD
+	quit $$$OK
+]]></Implementation>
+</Method>
 </Class>
 </Export>

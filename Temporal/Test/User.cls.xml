@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Test.User">
+<Super>%Persistent,Temporal.Common,Temporal.Populate</Super>
+<TimeCreated>64316,2657.457317</TimeCreated>
+
+<Property name="Name">
+<Type>%String</Type>
+</Property>
+
+<Property name="Surname">
+<Type>%String</Type>
+</Property>
+
+<Property name="Salary">
+<Type>%Integer</Type>
+<SqlComputeCode>set {*} = ##class(Temporal.Test.User).SalaryGetStatic({ID})</SqlComputeCode>
+<SqlComputed>1</SqlComputed>
+<Transient>1</Transient>
+<Parameter name="TIMEPROPERTY" value="1"/>
+</Property>
+
+<Method name="getRandomUser">
+<ClassMethod>1</ClassMethod>
+<CodeMode>expression</CodeMode>
+<ReturnType>Temporal.Test.User</ReturnType>
+<Implementation><![CDATA[..%OpenId($random(..lastId()-1)+1)
+]]></Implementation>
+</Method>
+
+<Method name="add">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>i</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set obj = ..%New(##class(%PopulateUtils).FirstName(), $random(100000), ##class(%PopulateUtils).LastName())
+	quit obj.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="upd">
+<Description>
+Обновить объект</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id,random</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set obj = ..%OpenId(id)
+	
+	// В 1 из 10 проходоав меняем зарплату
+	if $random(11)>9 {
+		set obj.Salary = random
+	}
+	quit obj.%Save()
+]]></Implementation>
+</Method>
+
+<Storage name="Default">
+<Type>%Library.CacheStorage</Type>
+<DataLocation>^Temporal.Test.UserD</DataLocation>
+<DefaultData>UserDefaultData</DefaultData>
+<IdLocation>^Temporal.Test.UserD</IdLocation>
+<IndexLocation>^Temporal.Test.UserI</IndexLocation>
+<StreamLocation>^Temporal.Test.UserS</StreamLocation>
+<Data name="UserDefaultData">
+<Value name="1">
+<Value>%%CLASSNAME</Value>
+</Value>
+<Value name="2">
+<Value>Name</Value>
+</Value>
+<Value name="3">
+<Value>Surname</Value>
+</Value>
+<Value name="4">
+<Value>Salary</Value>
+</Value>
+</Data>
+</Storage>
+
+<Method name="%OnAfterSave">
+<Description>
+Execute after each save to store temporal data</Description>
+<FormalSpec>insert:%Boolean</FormalSpec>
+<Private>1</Private>
+<ReturnType>%Status</ReturnType>
+<ServerOnly>1</ServerOnly>
+<Implementation><![CDATA[
+	set ts = ..ts2unixtime()
+	set id = ..%Id()
+	
+	if ((insert = $$$YES) || (^Temporal.Test.UserDSalary(id) '= i%Salary)) {
+		set ^Temporal.Test.UserDSalary(id) = i%Salary
+		set ^Temporal.Test.UserDSalary(id, ts) = i%Salary 
+	}
+
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="%OnNew">
+<FormalSpec>Name:%Library.String="",Salary:%Library.Integer="",Surname:%Library.String=""</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set ..Name = Name
+	set ..Salary = Salary
+	set ..Surname = Surname
+	quit $$$OK
+]]></Implementation>
+</Method>
+
+<Method name="SalaryGet">
+<Description>
+Salary getter method in object context</Description>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	set id = ..%Id()
+	return:'id i%Salary
+	return:i%Salary i%Salary
+	
+	if '..%unixtime {
+		set val = ^Temporal.Test.UserDSalary(id) 
+	} elseif $d(^Temporal.Test.UserDSalary(id, ..%unixtime), val) {
+	} elseif $o(^Temporal.Test.UserDSalary(id, ..%unixtime), ..%state, val) {
+	} elseif ..%state=1 {
+		set temp = $o(^Temporal.Test.UserDSalary(id, ..%unixtime), -1, val)
+	}
+	set i%Salary = val 
+	return i%Salary
+]]></Implementation>
+</Method>
+
+<Method name="SalaryGetStatic">
+<Description>
+Salary getter method in SQL context</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>id:%Integer</FormalSpec>
+<ReturnType>%Integer</ReturnType>
+<Implementation><![CDATA[
+	return:$d(%unixtime)=0 $g(^Temporal.Test.UserDSalary(id),"")
+	return:$d(^Temporal.Test.UserDSalary(id, %unixtime), val)=1 val
+	return:$o(^Temporal.Test.UserDSalary(id, %unixtime), %state, val) val
+	if %state=1 {
+		set temp = $o(^Temporal.Test.UserDSalary(id, %unixtime), -1, val)
+		return val
+	}
+	return ""
+]]></Implementation>
+</Method>
+
+<Method name="KillExtent">
+<Description>
+Kill extent</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill ^Temporal.Test.UserD
+	kill ^Temporal.Test.UserDSalary
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>
