@@ -14,10 +14,7 @@ do ##class(Temporal.Simple).populate()</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count=1000000,updCycles=10,rebuild=$$$NO</FormalSpec>
 <Implementation><![CDATA[
-	do ..clean()
-	kill ^dbg
-	kill:rebuild ^prop
-	do:rebuild ..%KillExtent()
+	do:rebuild ..KillExtent()
 	
 	do:rebuild ..massAdd(count)
 	do ..massAllUpd(updCycles)
@@ -111,6 +108,7 @@ do ##class(Temporal.Simple).populate()</Description>
 <CodeMode>objectgenerator</CodeMode>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
+	quit:%class.Abstract $$$OK
 	#dim sc As %Status = $$$OK
 	#dim method As %Dictionary.MethodDefinition = ##class(Temporal.Utils.Dictionary).getMethod(%class, "%OnNew")
 	
@@ -132,12 +130,6 @@ do ##class(Temporal.Simple).populate()</Description>
 	do method.Implementation.Write($c(9) _ "quit $$$OK")
 	set method.FormalSpec = $lts(spec)
 	quit method.%Save()
-]]></Implementation>
-</Method>
-
-<Method name="%OnNew">
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[	quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>

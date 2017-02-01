@@ -120,20 +120,12 @@ w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <CodeMode>objectgenerator</CodeMode>
 <ReturnType>%Status</ReturnType>
 <ForceGenerate>1</ForceGenerate>
-<Implementation><![CDATA[	quit ##class(Temporal.Generators).generateAllMethods(%class)
-]]></Implementation>
-</Method>
-
-<Method name="%OnAfterSave">
-<Description>
-Execute after each save to store temporal data</Description>
-<FormalSpec>insert:%Boolean</FormalSpec>
-<Private>1</Private>
-<ReturnType>%Status</ReturnType>
-<ServerOnly>1</ServerOnly>
 <Implementation><![CDATA[
- set ts = ..ts2unixtime()
- set id = ..%Id() quit $$$OK
+	#dim sc As %Status = $$$OK
+	if $$$classIsPersistent(%class.Name) {
+		set sc = ##class(Temporal.Generators).generateAllMethods(%class)
+	}
+	quit sc
 ]]></Implementation>
 </Method>
 </Class>

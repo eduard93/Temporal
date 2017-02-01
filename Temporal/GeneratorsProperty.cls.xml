@@ -124,7 +124,7 @@ Class, generating propertyGet, propertyGetStatic, propertySet methods for proper
 <FormalSpec>property,global</FormalSpec>
 <Implementation><![CDATA[
 	
-	if ((insert = $$$YES) || (global(id) '=i%property)) {
+	if ((insert = $$$YES) || (global(id) '= i%property)) {
 		set global(id) = i%property
 		set global(id, ts) = i%property 
 	}

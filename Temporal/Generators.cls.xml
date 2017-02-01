@@ -5,6 +5,7 @@
 Class, all methods for class
 propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <Abstract>1</Abstract>
+<IncludeCode>Temporal</IncludeCode>
 <Super>Temporal.Utils.Dictionary</Super>
 <TimeCreated>64306,75925.447893</TimeCreated>
 
@@ -141,6 +142,19 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
+	set sc = ..generateOnAfterSave(class)
+	quit:$$$ISERR(sc) sc
+	
+	set sc = ..generateKillExtent(class)
+	quit sc
+]]></Implementation>
+</Method>
+
+<Method name="generateOnAfterSave">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
 	#dim sc As %Status = $$$OK
 	/// Method %OnAfterSave(insert As %Boolean) As %Status [ Private, ServerOnly = 1 ]
 	#dim method As %Dictionary.MethodDefinition = ..getMethod(class, "%OnAfterSave")
@@ -152,7 +166,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 	set method.Private = $$$YES
 	set method.ServerOnly = $$$YES
 	
-	do method.Implementation.Write($$$TAB _ "set ts = ..ts2unixtime()" _ $$$NL _ $$$TAB _ "set id = ..%Id()")
+	do method.Implementation.Write($$$Tab _ "set ts = ..ts2unixtime()" _ $$$NL _ $$$Tab _ "set id = ..%Id()"_ $$$NL)
 	
 	for i=1:1:class.Properties.Count() {
 		#dim property As %Dictionary.PropertyDefinition
@@ -161,7 +175,33 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 		set code = ##class(Temporal.GeneratorsProperty).getSaveCode(property.Name, property.Type, ..getGlobal(class, property))
 		do method.Implementation.Write(code)
 	}
-	do method.Implementation.Write($$$TAB _ "quit $$$OK")
+	do method.Implementation.Write($$$NL _ $$$Tab _ "quit $$$OK")
+	quit method.%Save()
+]]></Implementation>
+</Method>
+
+<Method name="generateKillExtent">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	#dim method As %Dictionary.MethodDefinition = ..getMethod(class, "KillExtent")
+
+	set method.ClassMethod = $$$YES
+	set method.Description = "Kill extent"
+	set method.ReturnType = "%Status"
+	set method.Final = $$$NO
+	do method.Implementation.Clear()
+	do method.Implementation.Write($$$Tab _ "kill " _..getGlobal(class) _ $$$NL)
+	
+	for i=1:1:class.Properties.Count() {
+		#dim property As %Dictionary.PropertyDefinition
+		set property = class.Properties.GetAt(i)
+		CONTINUE:property.Parameters.GetAt("TIMEPROPERTY")'=$$$YES // Property is not a time roperty
+		do method.Implementation.Write($$$Tab _ "kill " _ ..getGlobal(class, property) _ $$$NL)
+	}
+	do method.Implementation.Write($$$Tab _ "quit $$$OK")
 	quit method.%Save()
 ]]></Implementation>
 </Method>
@@ -180,7 +220,7 @@ propertyGet, propertyGetStatic, propertySet methods for property</Description>
 <ClassMethod>1</ClassMethod>
 <CodeMode>expression</CodeMode>
 <FormalSpec>class:%Dictionary.ClassDefinition,property:%Dictionary.PropertyDefinition</FormalSpec>
-<Implementation><![CDATA[class.Storages.GetAt(1).DataLocation _ property.Name
+<Implementation><![CDATA[class.Storages.GetAt(1).DataLocation _ $s($isObject($g(property)):property.Name, 1:"")
 ]]></Implementation>
 </Method>
 </Class>
