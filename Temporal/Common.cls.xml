@@ -44,7 +44,7 @@ Open object at the specific point in time
 <Description>
 Internal method to set unixtime/state
 Внутренний метод установки %state/%unixtime</Description>
-<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($zunixtime,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
+<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	set i%%state = state
@@ -62,7 +62,7 @@ WHERE Temporal.AtTime(1,1484820252,1)=1 или Temporal.AtTime(,'2017-01-19 00:1
 w ##class(Utils.Temp).AtTime("2017-01-19 00:18:14.000"),!,%unixtime 1484815635
 w ##class(Utils.Temp).AtTime(1484815635) - debug</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($zunixtime,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
+<FormalSpec>state:%String(VALUELIST=",-1,1",DISPLAYLIST=",before,after")=1,unixtime:%TimeStamp={$zdt($ztimestamp,3,1,3)},debug:%Boolean=$$$NO</FormalSpec>
 <ReturnType>%Boolean</ReturnType>
 <SqlName>AtTime</SqlName>
 <SqlProc>1</SqlProc>

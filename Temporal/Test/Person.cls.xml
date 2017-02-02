@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Export generator="Cache" version="25">
-<Class name="Temporal.Test.User">
+<Class name="Temporal.Test.Person">
 <Super>%Persistent,Temporal.Common,Temporal.Populate</Super>
 <TimeCreated>64316,2657.457317</TimeCreated>
 
@@ -14,7 +14,7 @@
 
 <Property name="Salary">
 <Type>%Integer</Type>
-<SqlComputeCode>set {*} = ##class(Temporal.Test.User).SalaryGetStatic({ID})</SqlComputeCode>
+<SqlComputeCode>set {*} = ##class(Temporal.Test.Person).SalaryGetStatic({ID})</SqlComputeCode>
 <SqlComputed>1</SqlComputed>
 <Transient>1</Transient>
 <Parameter name="TIMEPROPERTY" value="1"/>
@@ -57,12 +57,12 @@
 
 <Storage name="Default">
 <Type>%Library.CacheStorage</Type>
-<DataLocation>^Temporal.Test.UserD</DataLocation>
-<DefaultData>UserDefaultData</DefaultData>
-<IdLocation>^Temporal.Test.UserD</IdLocation>
-<IndexLocation>^Temporal.Test.UserI</IndexLocation>
-<StreamLocation>^Temporal.Test.UserS</StreamLocation>
-<Data name="UserDefaultData">
+<DataLocation>^Temporal.Test.PersonD</DataLocation>
+<DefaultData>PersonDefaultData</DefaultData>
+<IdLocation>^Temporal.Test.PersonD</IdLocation>
+<IndexLocation>^Temporal.Test.PersonI</IndexLocation>
+<StreamLocation>^Temporal.Test.PersonS</StreamLocation>
+<Data name="PersonDefaultData">
 <Value name="1">
 <Value>%%CLASSNAME</Value>
 </Value>
@@ -71,9 +71,6 @@
 </Value>
 <Value name="3">
 <Value>Surname</Value>
-</Value>
-<Value name="4">
-<Value>Salary</Value>
 </Value>
 </Data>
 </Storage>
@@ -89,9 +86,9 @@ Execute after each save to store temporal data</Description>
 	set ts = ..ts2unixtime()
 	set id = ..%Id()
 	
-	if ((insert = $$$YES) || (^Temporal.Test.UserDSalary(id) '= i%Salary)) {
-		set ^Temporal.Test.UserDSalary(id) = i%Salary
-		set ^Temporal.Test.UserDSalary(id, ts) = i%Salary 
+	if ((insert = $$$YES) || (^Temporal.Test.PersonDSalary(id) '= i%Salary)) {
+		set ^Temporal.Test.PersonDSalary(id) = i%Salary
+		set ^Temporal.Test.PersonDSalary(id, ts) = i%Salary 
 	}
 
 	quit $$$OK
@@ -109,6 +106,18 @@ Execute after each save to store temporal data</Description>
 ]]></Implementation>
 </Method>
 
+<Method name="KillExtent">
+<Description>
+Kill extent</Description>
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	kill ^Temporal.Test.PersonD
+	kill ^Temporal.Test.PersonDSalary
+	quit $$$OK
+]]></Implementation>
+</Method>
+
 <Method name="SalaryGet">
 <Description>
 Salary getter method in object context</Description>
@@ -119,11 +128,11 @@ Salary getter method in object context</Description>
 	return:i%Salary i%Salary
 	
 	if '..%unixtime {
-		set val = ^Temporal.Test.UserDSalary(id) 
-	} elseif $d(^Temporal.Test.UserDSalary(id, ..%unixtime), val) {
-	} elseif $o(^Temporal.Test.UserDSalary(id, ..%unixtime), ..%state, val) {
+		set val = ^Temporal.Test.PersonDSalary(id) 
+	} elseif $d(^Temporal.Test.PersonDSalary(id, ..%unixtime), val) {
+	} elseif $o(^Temporal.Test.PersonDSalary(id, ..%unixtime), ..%state, val) {
 	} elseif ..%state=1 {
-		set temp = $o(^Temporal.Test.UserDSalary(id, ..%unixtime), -1, val)
+		set temp = $o(^Temporal.Test.PersonDSalary(id, ..%unixtime), -1, val)
 	}
 	set i%Salary = val 
 	return i%Salary
@@ -137,26 +146,14 @@ Salary getter method in SQL context</Description>
 <FormalSpec>id:%Integer</FormalSpec>
 <ReturnType>%Integer</ReturnType>
 <Implementation><![CDATA[
-	return:$d(%unixtime)=0 $g(^Temporal.Test.UserDSalary(id),"")
-	return:$d(^Temporal.Test.UserDSalary(id, %unixtime), val)=1 val
-	return:$o(^Temporal.Test.UserDSalary(id, %unixtime), %state, val) val
+	return:$d(%unixtime)=0 $g(^Temporal.Test.PersonDSalary(id),"")
+	return:$d(^Temporal.Test.PersonDSalary(id, %unixtime), val)=1 val
+	return:$o(^Temporal.Test.PersonDSalary(id, %unixtime), %state, val) val
 	if %state=1 {
-		set temp = $o(^Temporal.Test.UserDSalary(id, %unixtime), -1, val)
+		set temp = $o(^Temporal.Test.PersonDSalary(id, %unixtime), -1, val)
 		return val
 	}
 	return ""
-]]></Implementation>
-</Method>
-
-<Method name="KillExtent">
-<Description>
-Kill extent</Description>
-<ClassMethod>1</ClassMethod>
-<ReturnType>%Status</ReturnType>
-<Implementation><![CDATA[
-	kill ^Temporal.Test.UserD
-	kill ^Temporal.Test.UserDSalary
-	quit $$$OK
 ]]></Implementation>
 </Method>
 </Class>

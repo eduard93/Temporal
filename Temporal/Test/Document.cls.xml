@@ -5,7 +5,7 @@
 <TimeCreated>64316,2640.528257</TimeCreated>
 
 <Property name="Author">
-<Type>Temporal.Test.User</Type>
+<Type>Temporal.Test.Person</Type>
 <SqlComputeCode>set {*} = ##class(Temporal.Test.Document).AuthorGetStatic({ID})</SqlComputeCode>
 <SqlComputed>1</SqlComputed>
 <Transient>1</Transient>

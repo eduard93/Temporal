@@ -9,7 +9,7 @@
 </Property>
 
 <Property name="Manager">
-<Type>Temporal.Test.User</Type>
+<Type>Temporal.Test.Person</Type>
 <SqlComputeCode>set {*} = ##class(Temporal.Test.Department).ManagerGetStatic({ID})</SqlComputeCode>
 <SqlComputed>1</SqlComputed>
 <Transient>1</Transient>
@@ -21,6 +21,7 @@
 <SqlComputeCode>set {*} = ##class(Temporal.Test.Department).DescriptionGetStatic({ID})</SqlComputeCode>
 <SqlComputed>1</SqlComputed>
 <Transient>1</Transient>
+<Parameter name="MAXLEN"/>
 <Parameter name="TIMEPROPERTY" value="1"/>
 </Property>
 

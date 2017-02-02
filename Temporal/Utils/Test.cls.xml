@@ -12,22 +12,22 @@ do ##class(Temporal.Utils.Test).Populate(10)</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>count=1000000,cycles=10,rebuild:%Boolean=$$$YES</FormalSpec>
 <Implementation><![CDATA[
-	set classList = $lb("Temporal.Test.User", "Temporal.Test.Department", "Temporal.Test.Document")
+	set classList = $lb("Temporal.Test.Person", "Temporal.Test.Department", "Temporal.Test.Document")
 	
 	if rebuild {
-		for i=1:1:classList {
+		for i=1:1:$ll(classList) {
 			set class = $lg(classList, i)
 			do $classmethod(class, "KillExtent")
 		}
 	}
 	
-	for i=1:1:classList {
+	for i=1:1:$ll(classList) {
 		set class = $lg(classList, i)
 		do $classmethod(class, "massAdd", count)
 	}
 	
 	for j=1:1:cycles {
-		for i=1:1:classList {
+		for i=1:1:$ll(classList) {
 			set class = $lg(classList, i)
 			do $classmethod(class, "massAllUpd", 1)
 		}
