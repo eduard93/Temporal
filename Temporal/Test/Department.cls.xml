@@ -30,7 +30,7 @@
 <FormalSpec>i</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set obj = ..%New(##class(%PopulateUtils).Mission(), ##class(Temporal.Test.User).getRandomUser(), ##class(%PopulateUtils).Company())
+	set obj = ..%New(##class(%PopulateUtils).Mission(), ##class(Temporal.Test.Person).getRandom(), ##class(%PopulateUtils).Company())
 	quit obj.%Save()
 ]]></Implementation>
 </Method>
@@ -46,7 +46,7 @@
 	
 	// В 1 из 10 проходоав меняем руководителя
 	if $random(11)>9 {
-		set obj.Manager = ##class(Temporal.Test.User).getRandomUser()
+		set obj.Manager = ##class(Temporal.Test.Person).getRandom()
 	}
 	quit obj.%Save()
 ]]></Implementation>
@@ -101,7 +101,7 @@ Execute after each save to store temporal data</Description>
 </Method>
 
 <Method name="%OnNew">
-<FormalSpec>Description:%Library.String="",Manager:Temporal.Test.User="",Name:%Library.String=""</FormalSpec>
+<FormalSpec>Description:%Library.String="",Manager:Temporal.Test.Person="",Name:%Library.String=""</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	set ..Description = Description
@@ -114,7 +114,7 @@ Execute after each save to store temporal data</Description>
 <Method name="ManagerGet">
 <Description>
 Manager getter method in object context</Description>
-<ReturnType>Temporal.Test.User</ReturnType>
+<ReturnType>Temporal.Test.Person</ReturnType>
 <Implementation><![CDATA[
 	set id = ..%Id()
 	return:'id i%Manager
@@ -127,7 +127,7 @@ Manager getter method in object context</Description>
 	} elseif ..%state=1 {
 		set temp = $o(^Temporal.Test.DepartmentDManager(id, ..%unixtime), -1, val)
 	}
-	set i%Manager = ##class(Temporal.Test.User).%OpenId(val) 
+	set i%Manager = ##class(Temporal.Test.Person).%OpenId(val) 
 	return i%Manager
 ]]></Implementation>
 </Method>
@@ -137,7 +137,7 @@ Manager getter method in object context</Description>
 Manager getter method in SQL context</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>id:%Integer</FormalSpec>
-<ReturnType>Temporal.Test.User</ReturnType>
+<ReturnType>Temporal.Test.Person</ReturnType>
 <Implementation><![CDATA[
 	return:$d(%unixtime)=0 $g(^Temporal.Test.DepartmentDManager(id),"")
 	return:$d(^Temporal.Test.DepartmentDManager(id, %unixtime), val)=1 val

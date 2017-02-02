@@ -26,7 +26,7 @@
 <FormalSpec>i</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	set obj = ..%New(##class(Temporal.Test.User).getRandomUser(), ##class(%PopulateUtils).Mission())
+	set obj = ..%New(##class(Temporal.Test.Person).getRandom(), ##class(%PopulateUtils).Mission())
 	quit obj.%Save()
 ]]></Implementation>
 </Method>
@@ -40,7 +40,7 @@
 <Implementation><![CDATA[
 	set obj = ..%OpenId(id)
 	
-	set obj.Author = ##class(Temporal.Test.User).getRandomUser()
+	set obj.Author = ##class(Temporal.Test.Person).getRandom()
 	set obj.Text = ##class(%PopulateUtils).Mission()
 	
 	quit obj.%Save()
@@ -93,7 +93,7 @@ Execute after each save to store temporal data</Description>
 </Method>
 
 <Method name="%OnNew">
-<FormalSpec>Author:Temporal.Test.User="",Text:%Library.String=""</FormalSpec>
+<FormalSpec>Author:Temporal.Test.Person="",Text:%Library.String=""</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
 	set ..Author = Author
@@ -105,7 +105,7 @@ Execute after each save to store temporal data</Description>
 <Method name="AuthorGet">
 <Description>
 Author getter method in object context</Description>
-<ReturnType>Temporal.Test.User</ReturnType>
+<ReturnType>Temporal.Test.Person</ReturnType>
 <Implementation><![CDATA[
 	set id = ..%Id()
 	return:'id i%Author
@@ -118,7 +118,7 @@ Author getter method in object context</Description>
 	} elseif ..%state=1 {
 		set temp = $o(^Temporal.Test.DocumentDAuthor(id, ..%unixtime), -1, val)
 	}
-	set i%Author = ##class(Temporal.Test.User).%OpenId(val) 
+	set i%Author = ##class(Temporal.Test.Person).%OpenId(val) 
 	return i%Author
 ]]></Implementation>
 </Method>
@@ -128,7 +128,7 @@ Author getter method in object context</Description>
 Author getter method in SQL context</Description>
 <ClassMethod>1</ClassMethod>
 <FormalSpec>id:%Integer</FormalSpec>
-<ReturnType>Temporal.Test.User</ReturnType>
+<ReturnType>Temporal.Test.Person</ReturnType>
 <Implementation><![CDATA[
 	return:$d(%unixtime)=0 $g(^Temporal.Test.DocumentDAuthor(id),"")
 	return:$d(^Temporal.Test.DocumentDAuthor(id, %unixtime), val)=1 val

@@ -20,10 +20,10 @@
 <Parameter name="TIMEPROPERTY" value="1"/>
 </Property>
 
-<Method name="getRandomUser">
+<Method name="getRandom">
 <ClassMethod>1</ClassMethod>
 <CodeMode>expression</CodeMode>
-<ReturnType>Temporal.Test.User</ReturnType>
+<ReturnType>Temporal.Test.Person</ReturnType>
 <Implementation><![CDATA[..%OpenId($random(..lastId()-1)+1)
 ]]></Implementation>
 </Method>
