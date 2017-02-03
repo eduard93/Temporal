@@ -47,11 +47,14 @@ do ##class(Temporal.Utils.Test).PopulateJob()</Description>
 	set chunk = count\jobs
 	
 	set timeStart=$p($h,",",2)
-	for i=1:1:(jobs-1) {
+	for i=1:1:(jobs) {
 		job ##class(Temporal.Test.Person).massAdd(chunk)
 	}
-	do ##class(Temporal.Test.Person).massAdd(chunk)
 	
+	for i=1:1:jobs { 
+ 		do $system.Event.Wait()
+ 	}
+
 	set timeEnd=$p($h,",",2)
 	write !,"Time: ", timeEnd - timeStart, !
 ]]></Implementation>

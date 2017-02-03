@@ -33,6 +33,7 @@ do ##class(Temporal.Simple).populate()</Description>
 		set sc = ..add(i)
 		write:$$$ISERR(sc) $System.Status.GetErrorText(sc)
 	}
+	do $system.Event.Signal($zparent)
 ]]></Implementation>
 </Method>
 
