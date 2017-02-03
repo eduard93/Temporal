@@ -34,5 +34,27 @@ do ##class(Temporal.Utils.Test).Populate(10)</Description>
 	}
 ]]></Implementation>
 </Method>
+
+<Method name="PopulateJob">
+<Description>
+do ##class(Temporal.Utils.Test).PopulateJob()</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>count=1000000,jobs:%Integer=4,rebuild:%Boolean=$$$YES</FormalSpec>
+<Implementation><![CDATA[
+	
+	do:rebuild ##class(Temporal.Test.Person).KillExtent()
+	
+	set chunk = count\jobs
+	
+	set timeStart=$p($h,",",2)
+	for i=1:1:(jobs-1) {
+		job ##class(Temporal.Test.Person).massAdd(chunk)
+	}
+	do ##class(Temporal.Test.Person).massAdd(chunk)
+	
+	set timeEnd=$p($h,",",2)
+	write !,"Time: ", timeEnd - timeStart, !
+]]></Implementation>
+</Method>
 </Class>
 </Export>
