@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Temporal.Remove">
+<Description>
+Removes Temporal datatypes from class</Description>
+<Abstract>1</Abstract>
+<TimeCreated>64320,83335.909186</TimeCreated>
+
+<Method name="RemoveFromAllClasses">
+<Description>
+Entry point. Converts all user classes.
+w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromAllClasses())</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sc As %Status = $$$OK
+	set sc = $System.OBJ.GetClassList(.Classes, "/application=0 /system=0 /percent=0 /mapped=0")
+	Quit:$$$ISERR(sc)
+	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
+	Quit sc
+]]></Implementation>
+</Method>
+
+<Method name="RemoveFromSubclassesOf">
+<Description>
+Entry point. Converts all subclasses Of class (and class itself).
+w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromSubclassesOf())</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>Class:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sc As %Status = $$$OK
+	Set RS = ##class(%ResultSet).%New("%Dictionary.ClassDefinition:SubclassOf")
+	Set sc = RS.%Execute(Class)
+	Quit:$$$ISERR(sc) 
+	
+	Set Classes(Class) = ""
+
+	While (RS.%Next(.sc)) {
+		Quit:$$$ISERR(sc)		
+		Set Classes(RS.Data("Name")) = ""
+	}
+	
+	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
+	Quit sc
+]]></Implementation>
+</Method>
+
+<Method name="RemoveFromMatchingClasses">
+<Description>
+Entry point. Converts all classes matching Mask pattern .
+w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromMatchingClasses())</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>Mask:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sc As %Status = $$$OK
+	
+	Set SQL = "SELECT ID FROM %Dictionary.ClassDefinition Where ID LIKE ?"
+	Set ST = ##class(%SQL.Statement).%New()
+	Set sc = ST.%Prepare(SQL)
+	Quit:$$$ISERR(sc) sc
+	
+	#Dim RS As %SQL.StatementResult
+	Set RS = ST.%Execute(Mask)
+	
+	While RS.%Next() {
+		Set Classes(RS.%GetData(1)) = ""
+	}
+	
+	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
+	Quit sc
+]]></Implementation>
+</Method>
+
+<Method name="RemoveFromClassLocal">
+<Description>
+Iterates over Classes local and converts them.
+w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClassLocal())</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&Classes:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sc,sc1 As %Status = $$$OK
+	Set Class = ""
+	For { 
+		Set Class = $Order(Classes(Class)) 
+		Quit:Class=""
+		Set sc1 = ..RemoveFromClass(Class, Replace, Capitalize)
+		Set sc = $$$ADDSC(sc, sc1)		
+	}
+	Quit sc
+]]></Implementation>
+</Method>
+
+<Method name="RemoveFromClass">
+<Description><![CDATA[
+Convert one class.
+Params: Replace - what to replace $ with. Capitalize - capitalize the letter after $.
+For example, with defaults: {}.$fromJSON -> {}.%FromJSON
+w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClass())]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>classname:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#Dim sc As %Status = $$$OK
+	
+	set class = ##class(%Dictionary.ClassDefinition).%OpenId(classname)
+	
+	//set propList = ..getProperties(class)
+	Quit:$$$ISERR(sc) sc
+
+	for i=1:1:class.Properties.Count() {
+		#dim property As %Dictionary.PropertyDefinition
+		set property = class.Properties.GetAt(i)
+		CONTINUE:property.Parameters.GetAt("TIMEPROPERTY")'=$$$YES // Property is not a time roperty
+		set sc = ..removePropertyMethods(class, property)
+		quit:$$$ISERR(sc)
+		set sc = ..setPropertyObject(property)
+		quit:$$$ISERR(sc)			
+	}
+	
+	set sc = ..removeClassMethods(class, property)
+	quit:$$$ISERR(sc) sc
+	
+	do ..removeSuperClass(class)
+
+	set sc = class.%Save()
+	
+	Quit sc
+]]></Implementation>
+</Method>
+
+<Method name="getProperties">
+<Description>
+Get Temporal properties list</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
+<ReturnType>%List</ReturnType>
+</Method>
+
+<Method name="removePropertyMethods">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition,property:%Dictionary.PropertyDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	
+	set methodsList = $lb("Get", "GetStored","GetStatic")
+	set propertyName = property.Name
+	for i=1:1:$ll(methodsList) {
+		set methodName = propertyName _ $lg(methodsList, i)
+		set methodPosition = class.Methods.FindObjectId(class.Name _ "||" _ methodName)
+		CONTINUE:methodPosition=""
+		do class.Methods.RemoveAt(methodPosition)
+	}
+	
+	quit sc
+]]></Implementation>
+</Method>
+
+<Method name="removeClassMethods">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition,property:%Dictionary.PropertyDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	
+	set methodsList = $lb("%OnAfterSave")
+	for i=1:1:$ll(methodsList) {
+		set methodName = $lg(methodsList, i)
+		set methodPosition = class.Methods.FindObjectId(class.Name _ "||" _ methodName)
+		CONTINUE:methodPosition=""
+		do class.Methods.RemoveAt(methodPosition)
+	}
+	quit sc
+]]></Implementation>
+</Method>
+
+<Method name="removeSuperClass">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	#dim sc As %Status = $$$OK
+	
+	set superList = $lfs($tr(class.Super, " ", ""))
+	set commponPosition = $lf(superList, "Temporal.Common")
+	set:commponPosition'="" $list(superList, commponPosition, commponPosition) = ""
+	set class.Super = $lts(superList)
+	
+	quit sc
+]]></Implementation>
+</Method>
+
+<Method name="setPropertyObject">
+<ClassMethod>1</ClassMethod>
+<FormalSpec>property:%Dictionary.PropertyDefinition</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	/// Remove:
+	/// [ SqlComputeCode = {set {*} = ##class(class).propertyGetStatic({ID})}, SqlComputed, Transient ];
+
+	set property.Transient = $$$NO
+	set property.SqlComputed = $$$NO
+	set property.SqlComputeCode = ""
+	do property.Parameters.RemoveAt("TIMEPROPERTY")
+
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>
