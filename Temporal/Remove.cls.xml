@@ -4,112 +4,107 @@
 <Description>
 Removes Temporal datatypes from class</Description>
 <Abstract>1</Abstract>
+<IncludeCode>Temporal</IncludeCode>
 <TimeCreated>64320,83335.909186</TimeCreated>
 
-<Method name="RemoveFromAllClasses">
+<Method name="removeFromAllClasses">
 <Description>
 Entry point. Converts all user classes.
-w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromAllClasses())</Description>
+w $System.Status.GetErrorText(##class(Temporal.Remove).removeFromAllClasses())</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#Dim sc As %Status = $$$OK
-	set sc = $System.OBJ.GetClassList(.Classes, "/application=0 /system=0 /percent=0 /mapped=0")
-	Quit:$$$ISERR(sc)
-	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
-	Quit sc
+	#dim sc As %Status = $$$OK
+	set sc = ..removeFromSubclassesOf($$$SuperClass)
+	quit sc
 ]]></Implementation>
 </Method>
 
-<Method name="RemoveFromSubclassesOf">
+<Method name="removeFromSubclassesOf">
 <Description>
 Entry point. Converts all subclasses Of class (and class itself).
-w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromSubclassesOf())</Description>
+w $System.Status.GetErrorText(##class(Temporal.Remove).removeFromSubclassesOf())</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>Class:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<FormalSpec>class:%Dictionary.CacheClassname</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#Dim sc As %Status = $$$OK
-	Set RS = ##class(%ResultSet).%New("%Dictionary.ClassDefinition:SubclassOf")
-	Set sc = RS.%Execute(Class)
-	Quit:$$$ISERR(sc) 
+	#dim sc As %Status = $$$OK
+	set rs = ##class(%ResultSet).%New("%Dictionary.ClassDefinition:SubclassOf")
+	set sc = rs.%Execute(class)
+	quit:$$$ISERR(sc) 
 	
-	Set Classes(Class) = ""
+	set classes(class) = ""
 
-	While (RS.%Next(.sc)) {
-		Quit:$$$ISERR(sc)		
-		Set Classes(RS.Data("Name")) = ""
+	while (rs.%Next(.sc)) {
+		quit:$$$ISERR(sc)		
+		set classes(rs.Data("Name")) = ""
 	}
 	
-	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
-	Quit sc
+	set sc = ..removeFromClassLocal(.classes)
+	quit sc
 ]]></Implementation>
 </Method>
 
-<Method name="RemoveFromMatchingClasses">
+<Method name="removeFromMatchingClasses">
 <Description>
 Entry point. Converts all classes matching Mask pattern .
-w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromMatchingClasses())</Description>
+w $System.Status.GetErrorText(##class(Temporal.Remove).removeFromMatchingClasses())</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>Mask:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<FormalSpec>mask:%String</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#Dim sc As %Status = $$$OK
+	#dim sc As %Status = $$$OK
+	set mask = $translate(mask, "*", "%")
 	
-	Set SQL = "SELECT ID FROM %Dictionary.ClassDefinition Where ID LIKE ?"
-	Set ST = ##class(%SQL.Statement).%New()
-	Set sc = ST.%Prepare(SQL)
-	Quit:$$$ISERR(sc) sc
+	set sql = "SELECT ID FROM %Dictionary.ClassDefinition Where ID LIKE ? AND Super [ ?"
+	set st = ##class(%SQL.Statement).%New()
+	set sc = st.%Prepare(sql)
+	quit:$$$ISERR(sc) sc
 	
-	#Dim RS As %SQL.StatementResult
-	Set RS = ST.%Execute(Mask)
+	#dim rs As %SQL.StatementResult
+	set rs = st.%Execute(mask, $$$SuperClass)
 	
-	While RS.%Next() {
-		Set Classes(RS.%GetData(1)) = ""
+	while rs.%Next() {
+		set classes(rs.%GetData(1)) = ""
 	}
 	
-	Set sc = ..RemoveFromClassLocal(.Classes, Replace, Capitalize)
-	Quit sc
+	set sc = ..removeFromClassLocal(.classes)
+	quit sc
 ]]></Implementation>
 </Method>
 
-<Method name="RemoveFromClassLocal">
+<Method name="removeFromClassLocal">
 <Description>
 Iterates over Classes local and converts them.
-w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClassLocal())</Description>
+w $System.Status.GetErrorText(##class(Temporal.Remove).removeFromClassLocal())</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec><![CDATA[&Classes:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES]]></FormalSpec>
+<FormalSpec><![CDATA[&classes:%Dictionary.CacheClassname]]></FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#Dim sc,sc1 As %Status = $$$OK
-	Set Class = ""
-	For { 
-		Set Class = $Order(Classes(Class)) 
-		Quit:Class=""
-		Set sc1 = ..RemoveFromClass(Class, Replace, Capitalize)
-		Set sc = $$$ADDSC(sc, sc1)		
+	#dim sc,sc1 As %Status = $$$OK
+	set classname = ""
+	for { 
+		set classname = $Order(classes(classname)) 
+		quit:classname=""
+		set sc1 = ..removeFromClass(classname)
+		set sc = $$$ADDSC(sc, sc1)		
 	}
-	Quit sc
+	quit sc
 ]]></Implementation>
 </Method>
 
-<Method name="RemoveFromClass">
-<Description><![CDATA[
+<Method name="removeFromClass">
+<Description>
 Convert one class.
-Params: Replace - what to replace $ with. Capitalize - capitalize the letter after $.
-For example, with defaults: {}.$fromJSON -> {}.%FromJSON
-w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClass())]]></Description>
+w $System.Status.GetErrorText(##class(Temporal.Remove).removeFromClass())</Description>
 <ClassMethod>1</ClassMethod>
-<FormalSpec>classname:%String,Replace:%String="%",Capitalize:%Boolean=$$$YES</FormalSpec>
+<FormalSpec>classname:%Dictionary.CacheClassname</FormalSpec>
 <ReturnType>%Status</ReturnType>
 <Implementation><![CDATA[
-	#Dim sc As %Status = $$$OK
+	#dim sc As %Status = $$$OK
 	
-	set class = ##class(%Dictionary.ClassDefinition).%OpenId(classname)
-	
-	//set propList = ..getProperties(class)
-	Quit:$$$ISERR(sc) sc
+	set class = ##class(%Dictionary.ClassDefinition).%OpenId(classname,,.sc)
+	quit:$$$ISERR(sc) sc
 
 	for i=1:1:class.Properties.Count() {
 		#dim property As %Dictionary.PropertyDefinition
@@ -120,6 +115,7 @@ w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClass())]]></De
 		set sc = ..setPropertyObject(property)
 		quit:$$$ISERR(sc)			
 	}
+	quit:$$$ISERR(sc) sc
 	
 	set sc = ..removeClassMethods(class, property)
 	quit:$$$ISERR(sc) sc
@@ -128,16 +124,8 @@ w $System.Status.GetErrorText(##class(Temporal.Remove).RemoveFromClass())]]></De
 
 	set sc = class.%Save()
 	
-	Quit sc
+	quit sc
 ]]></Implementation>
-</Method>
-
-<Method name="getProperties">
-<Description>
-Get Temporal properties list</Description>
-<ClassMethod>1</ClassMethod>
-<FormalSpec>class:%Dictionary.ClassDefinition</FormalSpec>
-<ReturnType>%List</ReturnType>
 </Method>
 
 <Method name="removePropertyMethods">
@@ -186,7 +174,7 @@ Get Temporal properties list</Description>
 	#dim sc As %Status = $$$OK
 	
 	set superList = $lfs($tr(class.Super, " ", ""))
-	set commponPosition = $lf(superList, "Temporal.Common")
+	set commponPosition = $lf(superList, $$$SuperClass)
 	set:commponPosition'="" $list(superList, commponPosition, commponPosition) = ""
 	set class.Super = $lts(superList)
 	
