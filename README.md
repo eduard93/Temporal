@@ -1,4 +1,75 @@
 # Temporal
+
+Storage of temporal data in Caché.
+
+
+## Installation
+
+- Download the Temporal package and compile it
+
+## Intro
+
+Each Property is stored in a separate node:  `Package.ClassD.PropertyD(id, timestamp) = val` where:
+
+- `Package.ClassD` - class data global
+- `Package.ClassD.PropertyD` - global Property property
+  + `id` is the primary key
+  + `timestamp` - date/time in unixtime format
+  + `val` - value of the property (For the data type, we write the value, for the data type - id, serialize the serialized ones, wrap the stream into classes and write the id, serialize the lists/arrays of the objects into lists/arrays id, and then serialize the lists/arrays of the data)
+
+Also the node: `Package.ClassD.PropertyD(id) = val` with the most recent value of the property is automatically generated.
+
+## Property Getter
+
+### Object context
+
+Load into memory happens on the first call, then we take it from memory. The algorithm is as follows:
+
+1. If the value is in memory, we return it. EXIT
+2. If we need the latest version of the data, we'll take it.
+3. If we need the data at the moment %ts, we try to take the data at the moment `%ts`
+4. If we have not found 3, we take the following/previous value
+5. If we need a value for the date `>%ts`, but it does not exist, then take the previous value (should it be the same as 2? TODO)
+6. Write the received value into the memory
+7. Return the value
+
+### SQL context
+
+For SQL everything is similar, but only steps 2-5, 7 are executed.
+
+## Limitations
+
+- No INSERT/UPDATE - you can write a trigger
+- The problem of simultaneous updates is not solved - Lock was invented just for this purpose
+- No plain indices for current values - I don't see how to solve it without func indices, which are needed anyway
+- Temporary variables `%ts`/`%state` when used in COS SQL should be either new before or deleted after
+- No storage of object change metadata - Need to? Use case? How? Project to class {class, id, ts, diff}. In this form it is quite possible
+- One property cannot be updated more than once per second - it can be solved by adding 3 more characters for milliseconds.
+
+## Usage
+
+### Class example `Temporal.Simple`.
+
+1. To start with, generate sample data: `do ##class(Temporal.Simple).populate(count, updCycles, rebuild)` Creates `count` records, updates each `updCycles` times, deletes all data if `rebuild=1`. By default, it creates 1kk records, updating each one 10 times.
+2. To open an object at a certain moment of time (ro) run: `set obj = ##class(Temporal.Simple).openAt(id, concurrency, .sc, state, timestamp, debug)`, where:
+- `id` - the primary key
+- `concurrency` [-1] - object opening mode
+- `sc` - status
+- `state` [1] - what value to take if there is no value on timestamp. 1 - the next timestamp, -1 - the previous
+- `timestamp` [now] - date/time in Timestamp format: 2017-01-19 00:18:14
+- `debug` [0] - if 1, then timestamp in the unixtime format: 1484838070
+
+3. To execute a query for a certain time, add `Temporal.AtTime(state, timestamp, debug)=1` condition to WHERE, the variables are similar to 2.
+4. To open the latest version of the object (rw) use %OpenId(id, concurrency, .sc)
+
+## TODO
+
+- Unify %ts, ..%ts, timestamp
+- Generators how?
+   + In the class
+   + In the special type of data from which the special data types are inherited?
+
+# Temporal
 Хранение данных с историей в Caché.
 
 # Установка
